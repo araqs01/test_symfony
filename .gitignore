@@ -1,0 +1,38 @@
+# Symfony specific
+/var/
+/vendor/
+/node_modules/
+
+# Symfony cache and logs
+/var/cache/
+/var/log/
+/var/sessions/
+
+# dotenv environment files
+/.env.local
+/.env.local.php
+/.env.test.local
+/.env.dev.local
+
+# Docker related
+/docker-compose.override.yml
+/.docker/
+Dockerfile
+docker-compose.yml
+
+# IDE and Editor files
+/.idea/
+/.vscode/
+/*.swp
+*~
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Composer
+/composer.lock
+
+# Yarn / npm
+yarn-error.log
+package-lock.json

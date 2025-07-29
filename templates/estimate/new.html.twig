@@ -1,0 +1,187 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+    <style>
+        #services-table th, #services-table td {
+            vertical-align: middle;
+        }
+        .product-total {
+            font-weight: bold;
+            text-align: right;
+        }
+        .remove-service {
+            margin-left: 5px;
+        }
+        #total-price {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1 class="mb-4">Create Estimate</h1>
+
+        {{ form_start(form) }}
+
+        <div class="form-group">
+            {{ form_label(form.title) }}
+            {{ form_widget(form.title, {attr: {'class': 'form-control'}}) }}
+            {{ form_errors(form.title) }}
+        </div>
+
+        <div class="form-group">
+            {{ form_label(form.description) }}
+            {{ form_widget(form.description, {attr: {'class': 'form-control', 'rows': 3}}) }}
+            {{ form_errors(form.description) }}
+        </div>
+
+        <table id="services-table" class="table table-bordered table-sm">
+            <thead class="thead-light">
+            <tr>
+                <th style="width: 35%;">Service</th>
+                <th style="width: 15%;">Price (USD)</th>
+                <th style="width: 15%;">Quantity</th>
+                <th style="width: 15%;">Total</th>
+                <th style="width: 10%;">Actions</th>
+            </tr>
+            </thead>
+            <tbody data-prototype="{{ form_widget(form.estimatedProducts.vars.prototype)|e('html_attr') }}">
+            {% for product in form.estimatedProducts %}
+                <tr>
+                    <td>{{ form_widget(product.service, {attr: {'class': 'form-control'}}) }}</td>
+                    <td>{{ form_widget(product.price, {attr: {'class': 'form-control', 'min': 0, 'step': '0.01'}}) }}</td>
+                    <td>{{ form_widget(product.quantity, {attr: {'class': 'form-control', 'min': 1}}) }}</td>
+                    <td class="product-total text-right">0.00</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-danger remove-service" title="Remove service">&times;</button>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <button type="button" id="add-service" class="btn btn-primary btn-sm mb-3">+ Add Service</button>
+
+        <h4>Total Price: <span id="total-price">0.00</span> USD</h4>
+
+        <button type="submit" class="btn btn-success">Save Estimate</button>
+
+        {{ form_end(form) }}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const servicesTable = document.querySelector('#services-table tbody');
+            const addButton = document.querySelector('#add-service');
+            const totalPriceEl = document.querySelector('#total-price');
+
+            let index = servicesTable.children.length;
+
+            function updateTotals() {
+                let totalPrice = 0;
+
+                servicesTable.querySelectorAll('tr').forEach(row => {
+                    const priceInput = row.querySelector('input[id$="_price"]');
+                    const quantityInput = row.querySelector('input[id$="_quantity"]');
+                    const totalCell = row.querySelector('.product-total');
+
+                    const price = parseFloat(priceInput.value) || 0;
+                    const quantity = parseInt(quantityInput.value) || 0;
+                    const total = price * quantity;
+
+                    totalCell.textContent = total.toFixed(2);
+                    totalPrice += total;
+                });
+
+                totalPriceEl.textContent = totalPrice.toFixed(2);
+            }
+
+            function addServiceForm() {
+                const prototype = servicesTable.dataset.prototype;
+                const newForm = prototype.replace(/__name__/g, index);
+
+                // Create a temporary container to parse the prototype HTML
+                const tempDiv = document.createElement('tbody');
+                tempDiv.innerHTML = newForm;
+
+                // The prototype form fields are rendered as <td> elements — wrap properly:
+                // But Symfony's prototype usually only outputs the form widgets,
+                // so we manually create the <tr> and <td> with proper classes here.
+
+                // We'll build a new <tr> with 5 <td> columns:
+                const tr = document.createElement('tr');
+
+                // Create the service cell
+                const tdService = document.createElement('td');
+                const serviceInput = tempDiv.querySelector('select, input'); // service is usually a select
+                serviceInput.classList.add('form-control');
+                tdService.appendChild(serviceInput);
+                tr.appendChild(tdService);
+
+                // Create the price cell
+                const tdPrice = document.createElement('td');
+                const priceInput = tempDiv.querySelector('input[id$="_price"]');
+                priceInput.classList.add('form-control');
+                priceInput.min = "0";
+                priceInput.step = "0.01";
+                tdPrice.appendChild(priceInput);
+                tr.appendChild(tdPrice);
+
+                // Create the quantity cell
+                const tdQuantity = document.createElement('td');
+                const quantityInput = tempDiv.querySelector('input[id$="_quantity"]');
+                quantityInput.classList.add('form-control');
+                quantityInput.min = "1";
+                tdQuantity.appendChild(quantityInput);
+                tr.appendChild(tdQuantity);
+
+                // Total cell (empty, will be calculated)
+                const tdTotal = document.createElement('td');
+                tdTotal.classList.add('product-total', 'text-right');
+                tdTotal.textContent = '0.00';
+                tr.appendChild(tdTotal);
+
+                // Remove button cell
+                const tdRemove = document.createElement('td');
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.className = 'btn btn-sm btn-danger remove-service';
+                removeBtn.title = 'Remove service';
+                removeBtn.textContent = '×';
+                tdRemove.appendChild(removeBtn);
+                tr.appendChild(tdRemove);
+
+                // Append the fully constructed row to the table body
+                servicesTable.appendChild(tr);
+
+                index++;
+                updateTotals();
+            }
+
+
+            addButton.addEventListener('click', addServiceForm);
+
+            servicesTable.addEventListener('click', e => {
+                if (e.target.classList.contains('remove-service')) {
+                    const row = e.target.closest('tr');
+                    row.remove();
+                    updateTotals();
+                }
+            });
+
+            servicesTable.addEventListener('input', e => {
+                if (e.target.matches('input[id$="_price"], input[id$="_quantity"]')) {
+                    updateTotals();
+                }
+            });
+
+            updateTotals();
+        });
+    </script>
+{% endblock %}

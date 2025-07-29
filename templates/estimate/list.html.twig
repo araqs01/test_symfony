@@ -1,0 +1,52 @@
+{% extends 'base.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+{% endblock %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1 class="mb-4">All Estimates</h1>
+
+        {% if estimates|length > 0 %}
+            <table class="table table-striped table-bordered table-hover">
+                <thead class="thead-dark">
+                <tr>
+                    <th>Title</th>
+                    <th>Description</th>
+                    <th>Services</th>
+                    <th class="text-right">Total Price (USD)</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for estimate in estimates %}
+                    <tr>
+                        <td>{{ estimate.title }}</td>
+                        <td>{{ estimate.description|default('—') }}</td>
+                        <td>
+                            <ul class="mb-0 pl-3">
+                                {% for product in estimate.estimatedProducts %}
+                                    <li>
+                                        <strong>{{ product.service.name }}</strong> —
+                                        Price: {{ product.price|number_format(2) }} USD,
+                                        Qty: {{ product.quantity }},
+                                        <em>Total: {{ product.total|number_format(2) }} USD</em>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td class="text-right font-weight-bold">{{ estimate.getTotalPrice()|number_format(2) }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                No estimates found. <a href="{{ path('estimate_new') }}" class="alert-link">Create a new estimate</a>.
+            </div>
+        {% endif %}
+
+        <a href="{{ path('estimate_new') }}" class="btn btn-primary mt-3">+ Create New Estimate</a>
+    </div>
+{% endblock %}

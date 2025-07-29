@@ -1,0 +1,10 @@
+#index:
+#    path: /
+#    controller: App\Controller\DefaultController::index
+estimate_new:
+  path: /estimate/new
+  controller: App\Controller\EstimateController::new
+
+estimate_list:
+  path: /estimates
+  controller: App\Controller\EstimateController::list
