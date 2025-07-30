@@ -14,12 +14,6 @@
 /.env.test.local
 /.env.dev.local
 
-# Docker related
-/docker-compose.override.yml
-/.docker/
-Dockerfile
-docker-compose.yml
-
 # IDE and Editor files
 /.idea/
 /.vscode/
